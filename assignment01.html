@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Find My Location - Web Map Example</title>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.7.1/dist/leaflet.css" />
+  <style>
+    #map {
+      height: 400px;
+    }
+
+    .author-details {
+      position: absolute;
+      bottom: 10px;
+      right: 10px;
+      background-color: white;
+      padding: 10px;
+      font-size: 12px;
+      z-index: 9999; /* Ensure the details are displayed on top */
+    }
+  </style>
+</head>
+<body>
+  <h1>Find My Location</h1>
+  <div id="map"></div>
+  <button onclick="locateUser()">Search My Location</button>
+
+  <script src="https://cdn.jsdelivr.net/npm/leaflet@1.7.1/dist/leaflet.js"></script>
+  <script>
+    // Author Details
+    var authorName = "Bethwel Sunwa";
+    var authorDesignation = "Geospatial Information Scientist";
+    var authorEmail = "bethwel.cyberexpert@proton.me";
+
+    // Initialize the map
+    var map = L.map('map').setView([-1.286389, 36.817223], 13);
+
+    // Add the base map layer (you can choose a different tile layer if desired)
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '&copy; OpenStreetMap contributors'
+    }).addTo(map);
+
+    // Function to create a popup content
+    function createPopupContent(name, cuisine) {
+      return '<b>' + name + '</b><br>' + 'Cuisine: ' + cuisine;
+    }
+
+    // Function to handle mouse hover event
+    function handleMouseHover(event) {
+      // Get the hovered feature and its properties
+      var feature = event.target;
+      var properties = feature.feature.properties;
+
+      // Create the popup with the name and cuisine information
+      var popupContent = createPopupContent(properties.name, properties.cuisine);
+
+      // Open the popup at the hovered location
+      feature.bindPopup(popupContent).openPopup();
+    }
+
+    // GeoJSON data for the location in Nairobi (example data)
+    var nairobiData = {
+      "type": "Feature",
+      "properties": {
+        "name": "My Location",
+        "cuisine": "Nairobi CBD"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [36.817223, -1.286389]
+      }
+    };
+
+    // Create a GeoJSON layer with the data and add it to the map
+    var nairobiLayer = L.geoJSON(nairobiData, {
+      onEachFeature: function (feature, layer) {
+        layer.on({
+          mouseover: handleMouseHover
+        });
+      }
+    }).addTo(map);
+
+    // Function to locate the user's position
+    function locateUser() {
+      map.locate({ setView: true, maxZoom: 16 });
+    }
+
+    // Event handler for successful location
+    function onLocationFound(e) {
+      var radius = e.accuracy / 2;
+
+      L.marker(e.latlng).addTo(map)
+        .bindPopup("You are within " + radius + " meters from this point").openPopup();
+
+      L.circle(e.latlng, radius).addTo(map);
+    }
+
+    map.on('locationfound', onLocationFound);
+
+    // Show the user's location in Nairobi using Leaflet's locate control
+    L.control.locate().addTo(map);
+
+    // Add author details to the map
+    var authorDetails = L.control({
+      position: 'bottomright'
+    });
+
+    authorDetails.onAdd = function () {
+      var div = L.DomUtil.create('div', 'author-details');
+      div.innerHTML = '<p>Author: ' + authorName + '</p>' +
+                      '<p>Designation: ' + authorDesignation + '</p>' +
+                      '<p>Email: <a href="mailto:' + authorEmail + '">' + authorEmail + '</a></p>';
+      return div;
+    };
+
+    authorDetails.addTo(map);
+  </script>
+</body>
+</html>
